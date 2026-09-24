@@ -198,4 +198,204 @@ event: {
 
 Used as the **main programming language** for implementing the server, APIs, database operations, email service, queue system, and worker logic.
 
+📌 Important Notes
+1. Server and Worker are separate processes
+
+The Express server handles API requests.
+
+The worker handles background notification jobs.
+
+Both need to be running during local testing of Task 2.
+
+🧠 Important Concepts Demonstrated
+
+This project demonstrates several backend development concepts:
+
+<ul> <li>REST API development</li> <li>Express routing</li> <li>Controller-Service architecture</li> <li>MongoDB CRUD operations</li> <li>Mongoose schemas and models</li> <li>MongoDB ObjectId relationships</li> <li>Mongoose populate()</li> <li>Environment variables</li> <li>SMTP email sending</li> <li>Background job processing</li> <li>Redis queues</li> <li>BullMQ workers</li> <li>Docker container usage</li> <li>Asynchronous JavaScript</li> <li>Promises and async/await</li> <li>Error handling</li> <li>Separation of concerns</li> </ul>
+
+🧱 Separation of Responsibilities
+
+The project separates different responsibilities into different files.
+
+Routes
+
+Routes define API endpoints.
+
+routes/
+Controllers
+
+Controllers handle HTTP requests and responses.
+
+controllers/
+Services
+
+Services contain business logic and database operations.
+
+services/
+Models
+
+Models define MongoDB schemas.
+
+models/
+Jobs
+
+Jobs contain queue and worker-related functionality.
+
+jobs/
+Database
+
+Database connection is maintained separately.
+
+db/
+
+This structure makes the application easier to maintain and extend.
+
+🧪 Development Workflow
+
+For local development, run the following:
+
+Terminal 1 — Redis
+docker start cactro-redis
+
+If the container does not exist:
+
+docker run --name cactro-redis -p 6379:6379 -d redis
+Terminal 2 — Express Server
+pnpm dev
+Terminal 3 — Notification Worker
+pnpm worker
+
+Now the application is ready to process:
+
+API Requests
+     +
+MongoDB
+     +
+Redis
+     +
+BullMQ
+     +
+Background Worker
+     +
+Email Notifications
+
+🐳 Start Redis with Docker --> your choice if you don't use Docker then you use cloud redis
+
+Start Redis:
+docker run --name cactro-redis -p 6379:6379 -d redis
+
+Verify:
+docker ps
+The application can then connect using:
+
+REDIS_URL=redis://localhost:6379
+
+👷 Start Notification Worker
+
+The worker must run separately from the Express server.
+
+pnpm worker
+npm run worker
+
+This executes:
+
+👷 Notification Worker
+
+The worker is responsible for processing notification jobs.
+
+The worker runs independently from the main Express server.
+
+Example command:
+
+npm run worker
+
+The worker:
+
+1.Connects to MongoDB.
+2.Connects to Redis through BullMQ.
+3.Waits for notification jobs.
+4.Receives an event update job.
+5.Finds bookings related to that event.
+6.Iterates through the bookings.
+7.Sends notification emails.
+8.Marks the job as completed.
+
+node src/jobs/notificationWorker.js
+
+🧵 Why Use a Worker?
+
+Without a worker:
+
+Request
+  ↓
+Update Event
+  ↓
+Find Bookings
+  ↓
+Send Email 1
+  ↓
+Send Email 2
+  ↓
+Send Email 3
+  ↓
+Response
+
+The API request could take longer if many customers need to be notified.
+
+With BullMQ:
+
+Request
+  ↓
+Update Event
+  ↓
+Add Job
+  ↓
+Response
+
+Then separately:
+
+Worker
+  ↓
+Get Job
+  ↓
+Find Bookings
+  ↓
+Send Emails
+
+This separates the API request from background notification processing.
+
+⚙️ Environment Variables
+
+
+Create a .env file in the project root.
+
+PORT=3001
+MONGO_URI=your_mongodb_connection_string
+REDIS_URL=redis://localhost:6379
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_gmail_app_password
+
+Suggested testing order
+1. Start MongoDB
+       ↓
+2. Start Redis Docker container
+       ↓
+3. Start Express server
+       ↓
+4. Start notification worker
+       ↓
+5. Create Event
+       ↓
+6. Create Booking
+       ↓
+7. Check confirmation email
+       ↓
+8. Update Event
+       ↓
+9. Check BullMQ job
+       ↓
+10. Worker processes job
+       ↓
+11. Customer receives notification email
+
 
